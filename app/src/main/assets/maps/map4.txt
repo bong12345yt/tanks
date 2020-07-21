@@ -1,0 +1,39 @@
+
+
+
+
+
+
+      bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+      b                                 b
+      b                                 b
+      b      c                 d        b
+      b                                 b
+      b            d                    b
+      b                           d     b
+      b                   c             b
+      b          r                      b
+      b    c                      c     b
+      b                c                b
+      b     d                           b
+      b                                 b
+      b         c                       b
+      b                       r         b
+      b   r                             b
+      b            r                    b
+      b                                 b
+      b                                 b
+      b                                 b
+      b                                 b
+      b               w                 b
+      b         x                       b
+      b                                 b
+      b                                 b
+      b                                 b
+      b                                 b
+      b                                 b
+      b                                 b
+      b                                 b
+      b                                 b
+      b                                 b
+      bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
