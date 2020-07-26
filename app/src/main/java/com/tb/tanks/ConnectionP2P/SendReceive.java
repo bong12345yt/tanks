@@ -40,6 +40,14 @@ public class SendReceive extends Thread {
 
     }
 
+    public Socket getSocket() {
+        return socket;
+    }
+
+    public void setSocket(Socket socket) {
+        this.socket = socket;
+    }
+
     public String getLocalIP() {
         if(socket != null) return socket.getLocalAddress().getHostAddress();
         return "NONE";

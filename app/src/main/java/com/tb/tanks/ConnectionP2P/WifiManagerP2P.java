@@ -11,6 +11,7 @@ import android.net.wifi.p2p.WifiP2pDevice;
 import android.net.wifi.p2p.WifiP2pDeviceList;
 import android.net.wifi.p2p.WifiP2pInfo;
 import android.net.wifi.p2p.WifiP2pManager;
+import android.os.Build;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -29,9 +30,10 @@ public class WifiManagerP2P implements WifiP2pManager.ActionListener, WifiP2pMan
     private Activity mainActivity;
     private List<WifiP2pDevice> peers = new ArrayList<WifiP2pDevice>();
     private PeersAvailableListener peersAvailableListener;
-    private Server server;
-    private Client client;
+    private Server server = null;
+    private Client client = null;
     private boolean isHost = false;
+    private P2PConnectionListener p2PConnectionListener = null;
 
     String[] deviceNameArray;
     WifiP2pDevice[] deviceArray;
@@ -119,6 +121,14 @@ public class WifiManagerP2P implements WifiP2pManager.ActionListener, WifiP2pMan
         manager.discoverPeers(channel, this);
     }
 
+    public P2PConnectionListener getP2PConnectionListener() {
+        return p2PConnectionListener;
+    }
+
+    public void setP2PConnectionListener(P2PConnectionListener p2PConnectionListener) {
+        this.p2PConnectionListener = p2PConnectionListener;
+    }
+
     @Override
     public void onSuccess() {
         Toast.makeText(mainActivity.getApplicationContext(), "Discovery Started!", Toast.LENGTH_SHORT).show();
@@ -177,33 +187,60 @@ public class WifiManagerP2P implements WifiP2pManager.ActionListener, WifiP2pMan
     }
 
     public void disconnect() {
-        manager.cancelConnect(channel, new WifiP2pManager.ActionListener() {
+        manager.removeGroup(channel, new WifiP2pManager.ActionListener() {
             @Override
             public void onSuccess() {
                 Toast.makeText(mainActivity.getApplicationContext(), "Disconnect!", Toast.LENGTH_SHORT).show();
             }
+
             @Override
             public void onFailure(int reason) {
                 Log.d("Disconnect PEER", "onFailure" + String.valueOf(reason));
             }
         });
+
     }
 
     @Override
     public void onConnectionInfoAvailable(WifiP2pInfo wifiP2pInfo) {
         final InetAddress groupOwnerAddress = wifiP2pInfo.groupOwnerAddress;
+        boolean isConnectError = true;
         if(wifiP2pInfo.groupFormed && wifiP2pInfo.isGroupOwner){
             server = new Server();
             server.start();
+            server.getUpdateGameState().start();
+
             client = new Client(groupOwnerAddress);
             //client.start();
             isHost = true;
+            isConnectError = false;
             Toast.makeText(mainActivity.getApplicationContext(), "You are Host!", Toast.LENGTH_SHORT).show();
         }else if(wifiP2pInfo.groupFormed){
             client = new Client(groupOwnerAddress);
             //client.start();
             isHost = false;
+            isConnectError = false;
             Toast.makeText(mainActivity.getApplicationContext(), "You are Client!", Toast.LENGTH_SHORT).show();
         }
+
+        if(!isConnectError && p2PConnectionListener != null){
+            final boolean finalIsConnectError = isConnectError;
+            Thread thread = new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        if(isHost) {
+                            Thread.sleep(1000);
+                        }else{
+                            Thread.sleep(2000);
+                        }
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    p2PConnectionListener.onConnect(finalIsConnectError);
+                }
+            });
+           thread.start();
+        };
     }
 }

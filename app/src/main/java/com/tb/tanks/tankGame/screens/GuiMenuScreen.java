@@ -11,6 +11,7 @@ import android.graphics.Rect;
 import android.text.Html;
 import android.util.Log;
 
+import com.tb.tanks.ConnectionP2P.P2PConnectionListener;
 import com.tb.tanks.ConnectionP2P.PeersAvailableListener;
 import com.tb.tanks.ConnectionP2P.WifiManagerP2P;
 import com.tb.tanks.framework.Game;
@@ -20,12 +21,14 @@ import com.tb.tanks.framework.Screen;
 import com.tb.tanks.framework.gfx.AndroidGame;
 import com.tb.tanks.framework.input.AndroidInput;
 import com.tb.tanks.gui.AndroidButton;
+import com.tb.tanks.gui.AndroidImageButton;
 import com.tb.tanks.gui.AndroidListView;
 import com.tb.tanks.gui.AndroidPanel;
 import com.tb.tanks.gui.AndroidPic;
 import com.tb.tanks.gui.AndroidSlider;
 import com.tb.tanks.gui.Component;
 import com.tb.tanks.gui.ComponentClickListener;
+import com.tb.tanks.gui.ComponentItemClickListener;
 import com.tb.tanks.tankGame.core.TankGame;
 import com.tb.tanks.tankGame.core.TankResourceManager;
 import com.tb.tanks.R;
@@ -33,12 +36,14 @@ import com.tb.tanks.tankGame.core.Settings;
 import com.tb.tanks.tankGame.preferences.PreferenceConstants;
 import com.tb.tanks.tankGame.preferences.SetPreferencesActivity;
 
+import java.io.IOException;
 import java.util.List;
 
 public class GuiMenuScreen extends Screen implements PeersAvailableListener {
 
 	AndroidPanel panel;
 	AndroidButton btnPlay, btnHighscore, btnOptions, btnHelp, btnAbout;
+	AndroidImageButton btnSearch;
 	AndroidPic marioPic;
 	AndroidSlider slider;
 	private AndroidListView lstPlayer;
@@ -49,13 +54,13 @@ public class GuiMenuScreen extends Screen implements PeersAvailableListener {
 	private Bitmap background;
 
 	Bitmap frameBuffer;
-	public GuiMenuScreen(Game game) {
+	public GuiMenuScreen(final Game game) {
 		super(game);
 		width = game.getScreenWidth();
 		height =game.getScreenHeight();
 		frameBuffer = ((AndroidGame) game).getBuffer();
 		gameCanvas = new Canvas(frameBuffer);
-		background= TankResourceManager.loadImage("backgrounds/smb.png");
+		background= TankResourceManager.loadImage("backgrounds/tank_menu_bg.png");
 		panel = new AndroidPanel(" SUPERMARIO ", 0, 0, width, height);
 		panel.setTitleBarheight(36);
 		panel.setForeColor(Color.WHITE);
@@ -63,12 +68,18 @@ public class GuiMenuScreen extends Screen implements PeersAvailableListener {
 
 		btnPlay = new AndroidButton("PLAY", 10, tbh + 10, 140, 35);
 		btnHighscore = new AndroidButton("HIGHSCORE", 10, tbh + 60, 140, 35);
+		Bitmap imgSearchNormal = TankResourceManager.loadImage("gui/btn_search_normal.png");
+		Bitmap imgSearchFocus = TankResourceManager.loadImage("gui/btn_search_focus.png");
+		btnSearch = new AndroidImageButton("", width/2 - imgSearchNormal.getWidth()/2, height/2 - imgSearchNormal.getHeight()/2,  imgSearchNormal.getWidth(), imgSearchNormal.getHeight());
+		btnSearch.setBackgroundNormal(imgSearchNormal);
+		btnSearch.setBackgroundFocused(imgSearchFocus);
 		btnOptions = new AndroidButton("OPTIONS", 10, tbh + 110, 140, 35);
 		btnHelp = new AndroidButton("ABOUT", 10, tbh + 160, 140, 35);
 		btnAbout = new AndroidButton("i", 10, tbh + 170, 50, 35);
 		lstPlayer = new AndroidListView(width/2 - 500,height/2 - 350,1000,700);
 		String []strs = {"Bong 1", "Bong 2", "Danh 1", "Ban 1", "Dat 1", "Bao 1", "Anh 1"};
 		lstPlayer.setListText(strs);
+		lstPlayer.setVisible(false);
 
 		btnPlay.setTextSize(20);
 		btnHighscore.setTextSize(20);
@@ -82,17 +93,58 @@ public class GuiMenuScreen extends Screen implements PeersAvailableListener {
 		 * btnHelp.setForeColor(Color.WHITE);
 		 * btnAbout.setForeColor(Color.WHITE);
 		 */
-		panel.addComponent(btnPlay);
-		panel.addComponent(btnHighscore);
-		panel.addComponent(btnOptions);
-		panel.addComponent(btnHelp);
+		//panel.addComponent(btnPlay);
+		//panel.addComponent(btnHighscore);
+		panel.addComponent(btnSearch);
+		panel.addComponent(lstPlayer);
+		//panel.addComponent(btnOptions);
+		//panel.addComponent(btnHelp);
 		//panel.addComponent(btnAbout);
 
 		((TankGame)game).soundManager.loadMenuMusic();
 		game.getWifiManagerP2P().SetEnableWifi(true);
 		game.getWifiManagerP2P().setPeersAvailableListener(this);
+		if(game.getWifiManagerP2P().getHost() != null){
+			boolean isClose = game.getWifiManagerP2P().getHost().getSocket().isClosed();
+			if(!isClose) {
+				try {
+					game.getWifiManagerP2P().getHost().getSocket().close();
+					game.getWifiManagerP2P().getHost().getSendReceive().setSocket(null);
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		}
 
-		//game.getWifiManagerP2P().discover();
+
+		game.getWifiManagerP2P().setP2PConnectionListener(new P2PConnectionListener() {
+			@Override
+			public void onConnect(boolean isError) {
+				if(isError) {
+					Log.e("Tanks","Connection failed!");
+				}
+				WorldScreen worldScreen=new WorldScreen(game);
+				worldScreen.loadGame();
+				((AndroidGame) game).setScreenWithFade(worldScreen);
+				worldScreen.affterLoadGame();
+
+			}
+		});
+
+		btnSearch.addListener(new ComponentClickListener() {
+			@Override
+			public void onClick(Component source) {
+				game.getWifiManagerP2P().discover();
+			}
+		});
+
+		lstPlayer.setComponentItemClickListener(new ComponentItemClickListener() {
+			@Override
+			public void onItemClick(Component source, int index) {
+				game.getWifiManagerP2P().connect(index);
+			}
+		});
+
 	}
 
 	@Override
@@ -101,25 +153,27 @@ public class GuiMenuScreen extends Screen implements PeersAvailableListener {
 		
 		Graphics g = game.getGraphics();
 		List<TouchEvent> touchEvents = game.getInput().getTouchEvents();
+
+		if(!lstPlayer.isVisible()) btnSearch.setVisible(true);
 		
 		if (touchEvents ==null || touchEvents.size()==0) return;
 		int len = touchEvents.size();
 		for (int i = 0; i < len; i++) {
 			TouchEvent event = touchEvents.get(i);
-			btnPlay.processEvent(event);
-			btnHighscore.processEvent(event);
-			btnOptions.processEvent(event);
-			btnHelp.processEvent(event);
-			btnAbout.processEvent(event);
+			//btnPlay.processEvent(event);
+			//btnHighscore.processEvent(event);
+			//btnOptions.processEvent(event);
 			lstPlayer.processEvent(event);
+			btnSearch.processEvent(event);
 			
 			btnPlay.addListener(new ComponentClickListener() {
 				@Override
 				public void onClick(Component c) {
 					 WorldScreen worldScreen=new WorldScreen(game);
 					 configureInputs();
+
 					 ((AndroidGame) game).setScreenWithFade(worldScreen);
-					 worldScreen.loadGame();
+					  worldScreen.loadGame();
 	            	 Log.i("Game","starts");
 				}
 			});
@@ -131,6 +185,8 @@ public class GuiMenuScreen extends Screen implements PeersAvailableListener {
 					game.getWifiManagerP2P().discover();
 				}
 			});
+
+
 			
 			btnOptions.addListener(new ComponentClickListener() {
 				@Override
@@ -172,7 +228,6 @@ public class GuiMenuScreen extends Screen implements PeersAvailableListener {
 		gameCanvas.drawBitmap(background, null,new Rect(0,0,frameBuffer.getWidth(),frameBuffer.getHeight()), null);
 		//gameCanvas.drawBitmap(TankResourceManager.logo,frameBuffer.getWidth()/2,15, null);
 		panel.draw(gameCanvas, 0, -10);
-		lstPlayer.draw(gameCanvas,width/2 - lstPlayer.getWidth()/2,height/2 - lstPlayer.getHeight()/2);
 
 	}
 
@@ -265,12 +320,13 @@ public class GuiMenuScreen extends Screen implements PeersAvailableListener {
 		.create();
 		dialog.setCanceledOnTouchOutside(false);
 		dialog.show();
-		
 	}
 
 
 	@Override
 	public void onPeersAvailable(WifiManagerP2P wifiManagerP2P) {
+		btnSearch.setVisible(false);
+		lstPlayer.setVisible(true);
 		lstPlayer.setListText(wifiManagerP2P.getDeviceNameArray());
 	}
 }

@@ -9,6 +9,7 @@ import android.view.View;
 
 import com.erz.joysticklibrary.JoyStick;
 import com.tb.tanks.ConnectionP2P.MessageHandler;
+import com.tb.tanks.ConnectionP2P.P2PMessage;
 import com.tb.tanks.ConnectionP2P.SendReceive;
 import com.tb.tanks.framework.Game;
 import com.tb.tanks.framework.Input.KeyEvent;
@@ -108,7 +109,7 @@ public class WorldScreen extends Screen {
             }
         }
 
-        loadGame();
+        //loadGame();
         lockUpdates = false;
         lockInputs = false;
         Settings.world = 1;
@@ -117,9 +118,9 @@ public class WorldScreen extends Screen {
 
         gameState = new GameState();
 
-        if (game.getWifiManagerP2P().getServer() != null) {
-            game.getWifiManagerP2P().getServer().getUpdateGameState().start();
-        }
+//        if (game.getWifiManagerP2P().getServer() != null) {
+//            game.getWifiManagerP2P().getServer().getUpdateGameState().start();
+//        }
 
         ((AndroidGame) game).getFireButton().setOnClickListener(new View.OnClickListener() {
             @Override
@@ -223,6 +224,11 @@ public class WorldScreen extends Screen {
                 }
             }
         });
+    }
+
+    public void affterLoadGame(){
+        ((AndroidGame) game).ShowJoyStick(true);
+        ((AndroidGame) game).ShowFireButton(true);
     }
 
 
@@ -458,7 +464,20 @@ public class WorldScreen extends Screen {
 
     @Override
     public void onBackPressed() {
+        ((AndroidGame) game).ShowJoyStick(false);
+        ((AndroidGame) game).ShowFireButton(false);
+        Thread thread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                sendReceive.writeObjectJSON("{playerID: " + tank.getPlayerID() + ", TYPE_MESSAGE: " + P2PMessage.MESSAGE_DISCONNECT + "}");
+            }
+        });
+        thread.start();
+
+
+        game.getWifiManagerP2P().disconnect();
         goToMenu();
+
         //showControls_SetUp_Dialog();
     }
 

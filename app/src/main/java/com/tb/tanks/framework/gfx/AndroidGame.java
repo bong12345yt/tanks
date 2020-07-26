@@ -4,9 +4,11 @@ import android.app.ActionBar;
 import android.app.Activity;
 import android.content.Context;
 import android.content.res.Configuration;
+import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
 import android.graphics.Color;
+import android.graphics.Point;
 import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.os.Bundle;
@@ -92,6 +94,14 @@ public abstract class AndroidGame extends Activity implements Game, JoyStick.Joy
 
 		float h=metrics.heightPixels;
 		float w=metrics.widthPixels;
+
+		Point size = new Point();
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+			getWindowManager().getDefaultDisplay().getRealSize(size);
+			h = size.y;
+			w = size.x;
+		}
+
 		Log.v("mario"," window width & height (in pixels): " + w + ", " + h);
 		float aspectRaio=w/h;
 		//adjust width according to the aspect ratio, using this we can deal with any resolution.
@@ -129,6 +139,9 @@ public abstract class AndroidGame extends Activity implements Game, JoyStick.Joy
 		joyStick.setPadColor(Color.argb(50, 30,30,30));
 		joyStick.setListener(this);
 
+		joyStick.setVisibility(View.GONE);
+		fireButton.setVisibility(View.GONE);
+
 		//joyStick.setVisibility(View.GONE); //View.VISIBLE
 		game.addView(joyStick);
 		game.addView(fireButton);
@@ -156,6 +169,29 @@ public abstract class AndroidGame extends Activity implements Game, JoyStick.Joy
 		Settings.loadPreferences(this);
 		((AndroidInput) input).registerAccListener();
 		registerReceiver(wifiManagerP2P.getReceiver(), wifiManagerP2P.getIntentFilter());
+		if (Build.VERSION.SDK_INT < 16) {
+			getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
+					WindowManager.LayoutParams.FLAG_FULLSCREEN);
+		} else {
+			View decorView = getWindow().getDecorView();
+			// Hide the status bar.
+			int uiOptions = View.SYSTEM_UI_FLAG_LAYOUT_STABLE | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION| View.SYSTEM_UI_FLAG_FULLSCREEN | View.SYSTEM_UI_FLAG_FULLSCREEN | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY;
+			decorView.setSystemUiVisibility(uiOptions);
+		}
+	}
+
+	@Override
+	public void onWindowFocusChanged(boolean hasFocus) {
+		super.onWindowFocusChanged(hasFocus);
+		if (hasFocus) {
+			getWindow().getDecorView().setSystemUiVisibility(
+					View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+							| View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+							| View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+							| View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+							| View.SYSTEM_UI_FLAG_FULLSCREEN
+							| View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
+		}
 	}
 
 	@Override
@@ -210,6 +246,36 @@ public abstract class AndroidGame extends Activity implements Game, JoyStick.Joy
 	public JoyStick getJoyStick(){ return joyStick; }
 
 	public JoyStickEvent getJoyStickEvent(){return joyStickEvent;}
+
+	public void ShowJoyStick(final boolean visible){
+		this.runOnUiThread(new Runnable() {
+			@Override
+			public void run() {
+				if(visible){
+					joyStick.setVisibility(View.VISIBLE);
+				}else{
+					joyStick.setVisibility(View.GONE);
+				}
+			}
+
+		});
+
+	}
+
+	public void ShowFireButton(final boolean visible){
+		this.runOnUiThread(new Runnable() {
+			@Override
+			public void run() {
+				if(visible){
+					fireButton.setVisibility(View.VISIBLE);
+				}else{
+					fireButton.setVisibility(View.GONE);
+				}
+			}
+
+		});
+
+	}
 
 	@Override
 	public WifiManagerP2P getWifiManagerP2P() {
@@ -288,5 +354,10 @@ public abstract class AndroidGame extends Activity implements Game, JoyStick.Joy
 
 	public void setScreenTransitionActive(boolean screenTransitionActive) {
 		this.screenTransitionActive = screenTransitionActive;
+	}
+
+	@Override
+	public void onConfigurationChanged(Configuration newConfig) {
+		super.onConfigurationChanged(newConfig);
 	}
 }

@@ -14,6 +14,8 @@ public abstract class Component {
 	protected ComponentClickListener clickListener = null;
 	protected String text = "";
 
+	protected boolean isVisible = true;
+
 	public abstract void draw(Canvas g, int X, int Y);
 
 	protected int offsetX = borderWidth + 1;
@@ -28,6 +30,14 @@ public abstract class Component {
 		this.y = y;
 		this.width = w;
 		this.height = h;
+	}
+
+	public boolean isVisible() {
+		return isVisible;
+	}
+
+	public void setVisible(boolean visible) {
+		isVisible = visible;
 	}
 
 	public void addListener(ComponentClickListener clickListener) {

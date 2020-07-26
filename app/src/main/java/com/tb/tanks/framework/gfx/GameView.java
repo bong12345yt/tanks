@@ -207,13 +207,13 @@ class GameView extends SurfaceView implements SurfaceHolder.Callback {
          */
         private void updateGame() {
         	//// <DoNotRemove>
-            long now = System.nanoTime();
+            long now = System.currentTimeMillis();
             // Do nothing if mLastTime is in the future.
             // This allows the game-start to delay the start of the physics
             // by 100ms or whatever.
           //  if (mLastTime > now) 
             //	return;
-            float deltaTime = (float)(now - mLastTime)/1000000;
+            float deltaTime = (float)(now - mLastTime);
 
             mLastTime = now;
             if (switchTime>25){

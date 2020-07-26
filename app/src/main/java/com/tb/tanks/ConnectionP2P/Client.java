@@ -14,6 +14,10 @@ public class Client extends Thread {
         return sendReceive;
     }
 
+    public Socket getSocket() {
+        return socket;
+    }
+
     public Client(InetAddress hostAddress)
     {
         hostAdd=hostAddress.getHostAddress();

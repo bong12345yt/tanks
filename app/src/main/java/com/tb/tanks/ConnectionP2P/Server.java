@@ -14,10 +14,11 @@ import java.util.HashMap;
 
 public class Server extends Thread {
     Socket socket;
-    ServerSocket serverSocket;
+    ServerSocket serverSocket = null;
     public HashMap<String, SendReceive> sendReceives = new HashMap<>();
     private UpdateGameState updateGameState = null;
     private HashMap<String, PlayerInfo> players = new HashMap<String, PlayerInfo>();
+    public boolean isRun = true;
 
     MessageHandler messageServerHandler = new MessageHandler() {
         @Override
@@ -78,6 +79,29 @@ public class Server extends Thread {
                         }
                         break;
                     }
+                    case P2PMessage.MESSAGE_DISCONNECT: {
+                        PlayerInfo player = players.get(playerId);
+                        if (player != null) {
+                            players.remove(playerId);
+                            try {
+                                for( HashMap.Entry<String, SendReceive> entry:sendReceives.entrySet()){
+                                    entry.getValue().getSocket().close();
+                                    entry.getValue().setSocket(null);
+                                }
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                            isRun = false;
+                            try {
+                                serverSocket.close();
+                                serverSocket = null;
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                            sendReceives.remove(playerId);
+                        }
+                        break;
+                    }
                 }
 
             } catch (JSONException e) {
@@ -95,6 +119,14 @@ public class Server extends Thread {
         this.updateGameState = updateGameState;
     }
 
+    public ServerSocket getServerSocket() {
+        return serverSocket;
+    }
+
+    public void setServerSocket(ServerSocket serverSocket) {
+        this.serverSocket = serverSocket;
+    }
+
     public Thread getUpdateGameState() {
         return UpdateGameState;
     }
@@ -102,12 +134,13 @@ public class Server extends Thread {
     Thread UpdateGameState = new Thread(new Runnable() {
         private long lastUpdateTime = 0;
         public static final float FRAME_UPDATE = 1000/60;
+
         @Override
         public void run() {
-            while (true) {
+            while (isRun) {
 
-                long now = System.nanoTime();
-                float dt = (float) (now - lastUpdateTime) / 1000000;
+                long now = System.currentTimeMillis();
+                float dt = (float) (now - lastUpdateTime);
                 lastUpdateTime = now;
 
                 if (updateGameState != null)
@@ -127,13 +160,13 @@ public class Server extends Thread {
                 }
                 float wait = FRAME_UPDATE - dt;
                 //System.out.println("Bong wait: " + (long) wait + " - " + dt);
-                //if(wait > 0) {
+                if(wait > 0) {
                     try {
                         Thread.sleep((long) FRAME_UPDATE);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
-               // }
+               }
 
             }
         }
@@ -186,11 +219,12 @@ public class Server extends Thread {
     @Override
     public void run() {
         try {
-            serverSocket = new ServerSocket(8888);
+            if(serverSocket == null)
+               serverSocket = new ServerSocket(8888);
         } catch (IOException e) {
             e.printStackTrace();
         }
-        while (true) {
+        while (serverSocket != null) {
             try {
                 socket = serverSocket.accept();
                 SendReceive sendReceive = new SendReceive(socket);

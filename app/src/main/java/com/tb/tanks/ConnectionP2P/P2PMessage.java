@@ -12,4 +12,5 @@ public class P2PMessage {
     public static final int MESSAGE_PLAYER_FIRE_FLAME_HIDE = 9;
     public static final int MESSAGE_PLAYER_UPDATE_NOT_MOVE = 10;
     public static final int MESSAGE_TANK_PLAYER_HEATH = 11;
+    public static final int MESSAGE_DISCONNECT = 12;
 }
