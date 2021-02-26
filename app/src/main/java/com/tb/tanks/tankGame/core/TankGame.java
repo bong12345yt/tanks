@@ -36,8 +36,9 @@ public class TankGame extends AndroidGame {
 	 @Override
 	 public void onResume() {
 	      super.onResume();
-	      TankSoundManager.playMusic();
-	      
+	      if(Settings.musicEnabled){
+			  TankSoundManager.playMusic();
+		  }
 	 }
 
 	@Override
@@ -53,5 +54,4 @@ public class TankGame extends AndroidGame {
 	}
 
 
-	
 }

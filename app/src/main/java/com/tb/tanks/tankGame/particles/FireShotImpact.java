@@ -12,12 +12,14 @@ public class FireShotImpact extends Sprite {
     private static final int ANIM_TIME = 75;
     private Animation idleImpact;
     private boolean isVisible = false;
+    TankSoundManager soundManager;
 
     public FireShotImpact(TankSoundManager soundManager) {
 
         super(0, 0);
 
         this.setDegree(0.f);
+        this.soundManager = soundManager;
         idleImpact = new Animation(ANIM_TIME);
         for (int i = 0; i < TankResourceManager.FireShotImpacts.length; i++) {
             idleImpact.addFrame(TankResourceManager.FireShotImpacts[i]);

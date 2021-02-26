@@ -61,6 +61,11 @@ public abstract class Screen {
 	public abstract void resume();
 
 	/**
+	 * THIS methods will be called when the game is onStop
+	 */
+	public abstract void onStop();
+
+	/**
 	 * method will be called by the Game instance in case Game.setScreen() is
 	 * called. The Game instance will dispose of the current Screen via this
 	 * method and thereby give the Screen an opportunity to release all its

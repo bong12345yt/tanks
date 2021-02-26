@@ -21,6 +21,7 @@ public class Bullet extends Sprite {
     private boolean isVisible = false;
     private boolean beforeVisible = false;
     private FireShotImpact fireShotImpact;
+    private boolean isCollision = false;
 
     public Bullet(TankSoundManager soundManager) {
 
@@ -41,6 +42,14 @@ public class Bullet extends Sprite {
         setAnimation(idleBullet);
         fireShotImpact = new FireShotImpact(soundManager);
         this.setDegree(0.f);
+    }
+
+    public boolean isCollision() {
+        return isCollision;
+    }
+
+    public void setCollision(boolean collision) {
+        isCollision = collision;
     }
 
     public RecBody2D getBodyToHit2D() {
@@ -78,6 +87,10 @@ public class Bullet extends Sprite {
 
     public boolean isBeforeVisible() {
         return beforeVisible;
+    }
+
+    public void setBeforeVisible(boolean beforeVisible) {
+        this.beforeVisible = beforeVisible;
     }
 
     public FireShotImpact getFireShotImpact() {

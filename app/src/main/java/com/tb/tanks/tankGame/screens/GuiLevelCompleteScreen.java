@@ -144,6 +144,11 @@ public class GuiLevelCompleteScreen extends Screen {
 	}
 
 	@Override
+	public void onStop() {
+
+	}
+
+	@Override
 	public void dispose() {
 
 	}

@@ -114,6 +114,13 @@ public class AndroidGraphics implements Graphics {
 		}
 	}
 
+	public  void drawBitmapFont(Bitmap[] font, String text, int x, int y, int charSize, Paint paint) {
+		char[] ch = text.toCharArray();
+		for (int i = 0; i < ch.length; i++) {
+			canvas.drawBitmap(font[ch[i] - 32], x + i	* charSize, y, paint);
+		}
+	}
+
 	
 	public void drawLine(int x, int y, int x2, int y2, int color) {
 		paint.setColor(color);

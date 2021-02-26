@@ -370,6 +370,11 @@ public class GameScreen extends Screen {
 	}
 
 	@Override
+	public void onStop() {
+
+	}
+
+	@Override
 	public void dispose() {
 
 	}

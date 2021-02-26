@@ -5,6 +5,7 @@ package com.tb.tanks.tankGame.util;
 /** A collection of miscellaneous utility functions. */
 public class Utils {
     private static final float EPSILON = 0.0001f;
+    public static final float HEAR_SOUND_RADIUS = 1300.0f;
 
     public final static boolean close(float a, float b) {
         return close(a, b, EPSILON);
@@ -12,6 +13,10 @@ public class Utils {
 
     public final static boolean close(float a, float b, float epsilon) {
         return Math.abs(a - b) < epsilon;
+    }
+
+    public final static float distance(float x1, float y1, float x2, float y2){
+        return (float) Math.sqrt((x1 - x2)*(x1 - x2) + (y1 - y2)*(y1 - y2));
     }
 
     public final static int sign(float a) {

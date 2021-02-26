@@ -86,10 +86,26 @@ public class Settings {
 	        	 recodTimes[i]=scorePrefs.getInt("levelTime"+i, 10000);
 	        }
 	 	}
-	
+
+
 	public static int getWorldsUnlocked() {
 		return worldsUnlocked;
 	}
+
+	public static void SetSetting(String preferenceConstants, boolean val){
+		SharedPreferences prefs=context.getSharedPreferences(PreferenceConstants.PREFERENCE_MAIN_NAME, Context.MODE_PRIVATE);
+		Editor editor = prefs.edit();
+		editor.putBoolean(preferenceConstants, val);
+		editor.commit();
+	}
+
+	public static void SetSetting(String preferenceConstants, int val){
+		SharedPreferences prefs=context.getSharedPreferences(PreferenceConstants.PREFERENCE_MAIN_NAME, Context.MODE_PRIVATE);
+		Editor editor = prefs.edit();
+		editor.putInt(preferenceConstants, val);
+		editor.commit();
+	}
+
 
 	public static void setWorldsUnlocked(int worldsUnlocked) {
 		Settings.worldsUnlocked = worldsUnlocked;

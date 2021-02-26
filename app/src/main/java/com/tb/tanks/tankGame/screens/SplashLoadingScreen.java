@@ -34,6 +34,11 @@ public class SplashLoadingScreen extends Screen {
     }
 
     @Override
+    public void onStop() {
+
+    }
+
+    @Override
     public void dispose() {
     	
     }

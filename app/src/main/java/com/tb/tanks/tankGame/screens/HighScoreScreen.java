@@ -110,6 +110,11 @@ public class HighScoreScreen extends Screen {
 	}
 
 	@Override
+	public void onStop() {
+
+	}
+
+	@Override
 	public void dispose() {
 		Creature.WAKE_UP_VALUE_DOWN_RIGHT=game.getScreenWidth()/16;
 	}

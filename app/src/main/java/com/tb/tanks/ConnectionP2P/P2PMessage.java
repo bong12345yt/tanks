@@ -13,4 +13,8 @@ public class P2PMessage {
     public static final int MESSAGE_PLAYER_UPDATE_NOT_MOVE = 10;
     public static final int MESSAGE_TANK_PLAYER_HEATH = 11;
     public static final int MESSAGE_DISCONNECT = 12;
+    public static final int MESSAGE_TANK_PLAYER_SCORE = 13;
+    public static final int MESSAGE_TANK_PLAYER_WEAPON = 14;
+    public static final int MESSAGE_PLAYER_INPUT_POWER = 15;
+
 }

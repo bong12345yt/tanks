@@ -1,15 +1,15 @@
 package com.tb.tanks.framework.gfx;
 
-import android.app.ActionBar;
+import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.content.res.Configuration;
-import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
 import android.graphics.Color;
 import android.graphics.Point;
-import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.PowerManager;
@@ -19,15 +19,15 @@ import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.view.Window;
+import android.view.WindowInsets;
 import android.view.WindowManager;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
-import android.widget.Toast;
 
+import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import com.tb.tanks.ConnectionP2P.WifiManagerP2P;
-import com.tb.tanks.MainActivity;
 import com.tb.tanks.R;
 import com.tb.tanks.framework.Audio;
 import com.tb.tanks.framework.FileIO;
@@ -54,7 +54,7 @@ import com.erz.joysticklibrary.*;
  * @author mahesh
  * 
  */
-public abstract class AndroidGame extends Activity implements Game, JoyStick.JoyStickListener {
+public abstract class AndroidGame extends Activity implements Game, JoyStick.JoyStickListener, CheckApplicationExitServiceListener {
 	protected GameView renderView;
 	protected Graphics graphics;
 	protected Audio audio;
@@ -69,14 +69,22 @@ public abstract class AndroidGame extends Activity implements Game, JoyStick.Joy
 	protected Screen nextScreen=null;
 	protected boolean screenTransitionActive=false;
 	private JoyStick joyStick;
+	private JoyStick joyStickWeapon;
+
 	private JoyStickEvent joyStickEvent;
+	private JoyStickEvent joyStickEventWeapon;
 	private WifiManagerP2P wifiManagerP2P;
 	private ImageButton fireButton;
+	public CutoutHelper m_cutoutHelper = null;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
+
+		CheckApplicationExitService.setCheckApplicationExitServiceListener(this);
+		Intent checkApplicationExitService = new Intent(this, CheckApplicationExitService.class);
+		startService(checkApplicationExitService);
 
 		if (Build.VERSION.SDK_INT < 16) {
 			getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
@@ -87,6 +95,19 @@ public abstract class AndroidGame extends Activity implements Game, JoyStick.Joy
 			int uiOptions = View.SYSTEM_UI_FLAG_LAYOUT_STABLE | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION| View.SYSTEM_UI_FLAG_FULLSCREEN | View.SYSTEM_UI_FLAG_FULLSCREEN | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY;
 			decorView.setSystemUiVisibility(uiOptions);
 		}
+
+		if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
+			getWindow().getAttributes().layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
+			this.getWindow().getDecorView().getRootView().setOnApplyWindowInsetsListener(new View.OnApplyWindowInsetsListener() {
+				@Override
+				public WindowInsets onApplyWindowInsets(View v, WindowInsets insets) {
+					m_cutoutHelper = new CutoutHelper(insets.getDisplayCutout());
+					return insets;
+				}
+			});
+
+		}
+
 		//check the current orientation of the device and set the Width and Height of our Game. 
 		boolean isLandscape = getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE;
 		DisplayMetrics metrics = new DisplayMetrics();
@@ -95,14 +116,31 @@ public abstract class AndroidGame extends Activity implements Game, JoyStick.Joy
 		float h=metrics.heightPixels;
 		float w=metrics.widthPixels;
 
+
 		Point size = new Point();
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
 			getWindowManager().getDefaultDisplay().getRealSize(size);
 			h = size.y;
 			w = size.x;
 		}
+		if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
+				!= PackageManager.PERMISSION_GRANTED) {
+			if (ActivityCompat.shouldShowRequestPermissionRationale(this,
+					Manifest.permission.ACCESS_COARSE_LOCATION)) {
+				ActivityCompat.requestPermissions(this,
+						new String[]{Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION},
+						1
+				);
+			} else {
+				ActivityCompat.requestPermissions(this,
+						new String[]{Manifest.permission.ACCESS_COARSE_LOCATION},
+						8
+				);
+			}
+		}
 
-		Log.v("mario"," window width & height (in pixels): " + w + ", " + h);
+
+		Log.v("Tank"," window width & height (in pixels): " + w + ", " + h);
 		float aspectRaio=w/h;
 		//adjust width according to the aspect ratio, using this we can deal with any resolution.
 		WIDTH=(int) (HEIGHT*aspectRaio);
@@ -126,25 +164,58 @@ public abstract class AndroidGame extends Activity implements Game, JoyStick.Joy
 		float density = getResources().getDisplayMetrics().density;
 
 		fireButton = new ImageButton(this);
-		FrameLayout.LayoutParams pr = new FrameLayout.LayoutParams((int)(70*density), (int)(70*density), Gravity.BOTTOM| Gravity.RIGHT);
-		pr.setMargins(0,0,50,50);
+		FrameLayout.LayoutParams pr = new FrameLayout.LayoutParams((int)(60*density), (int)(60*density), Gravity.BOTTOM| Gravity.RIGHT);
+		pr.setMargins(0,0,50,300);
 		fireButton.setLayoutParams(pr);
 		fireButton.setBackground(ContextCompat.getDrawable(this,R.drawable.round_button));
+
 
 		joyStick = new JoyStick(this);
 		joyStickEvent = new JoyStickEvent();
 
+		joyStickWeapon = new JoyStick(this);
+		joyStickEventWeapon = new JoyStickEvent();
+		FrameLayout.LayoutParams pr1 = new FrameLayout.LayoutParams((int)(110*density), (int)(110*density), Gravity.BOTTOM | Gravity.RIGHT);
+		pr1.setMargins(0,0,200,30);
+		joyStickWeapon.setLayoutParams(pr1);
+		//joyStickWeapon.setPadColor(Color.argb(50, 30,30,30));
+		joyStickWeapon.setPadBackground(R.drawable.pad_line_light_05);
+		joyStickWeapon.setButtonDrawable(R.drawable.pad_line_light_49);
+		joyStickWeapon.setListener(new JoyStick.JoyStickListener() {
+			@Override
+			public void onMove(JoyStick joyStick, double angle, double power, int direction) {
+				joyStickEventWeapon.angle = angle;
+				joyStickEventWeapon.power = power;
+				joyStickEventWeapon.direction = direction;
+			}
+
+			@Override
+			public void onTap() {
+
+			}
+
+			@Override
+			public void onDoubleTap() {
+
+			}
+		});
+
+
 
 		joyStick.setLayoutParams(new FrameLayout.LayoutParams((int)(130*density), (int)(130*density), Gravity.BOTTOM));
-		joyStick.setPadColor(Color.argb(50, 30,30,30));
+		//joyStick.setPadColor(Color.argb(50, 30,30,30));
+		joyStick.setPadBackground(R.drawable.pad_transparent_light_05);
+		joyStick.setButtonDrawable(R.drawable.pad_transparent_light_49);
 		joyStick.setListener(this);
 
 		joyStick.setVisibility(View.GONE);
 		fireButton.setVisibility(View.GONE);
+		joyStickWeapon.setVisibility(View.GONE);
 
 		//joyStick.setVisibility(View.GONE); //View.VISIBLE
 		game.addView(joyStick);
 		game.addView(fireButton);
+		game.addView(joyStickWeapon);
 		setContentView(game);
 		//we also use the PowerManager to define the wakeLock variable and we acquire and 
 		//release wakelock in the onResume and onPause methods, respectively. 
@@ -153,6 +224,10 @@ public abstract class AndroidGame extends Activity implements Game, JoyStick.Joy
 		wifiManagerP2P = new WifiManagerP2P(this);
 	}
 
+
+	public boolean hasCutout(){
+		return m_cutoutHelper != null && m_cutoutHelper.getM_cutout() != null;
+	}
 
 
 	@Override
@@ -227,6 +302,25 @@ public abstract class AndroidGame extends Activity implements Game, JoyStick.Joy
 		unregisterReceiver(wifiManagerP2P.getReceiver());
 	}
 
+	@Override
+	protected void onStop() {
+		screen.onStop();
+		if (isFinishing())
+			screen.dispose();
+		super.onStop();
+	}
+
+	@Override
+	protected void onDestroy() {
+		super.onDestroy();
+		screen.dispose();
+	}
+
+	@Override
+	public void onAppExit() {
+		screen.dispose();
+	}
+
 	public Input getInput() {
 		return input;
 	}
@@ -247,6 +341,14 @@ public abstract class AndroidGame extends Activity implements Game, JoyStick.Joy
 
 	public JoyStickEvent getJoyStickEvent(){return joyStickEvent;}
 
+	public JoyStickEvent getJoyStickEventWeapon() {
+		return joyStickEventWeapon;
+	}
+
+	public void setJoyStickEventWeapon(JoyStickEvent joyStickEventWeapon) {
+		this.joyStickEventWeapon = joyStickEventWeapon;
+	}
+
 	public void ShowJoyStick(final boolean visible){
 		this.runOnUiThread(new Runnable() {
 			@Override
@@ -255,6 +357,21 @@ public abstract class AndroidGame extends Activity implements Game, JoyStick.Joy
 					joyStick.setVisibility(View.VISIBLE);
 				}else{
 					joyStick.setVisibility(View.GONE);
+				}
+			}
+
+		});
+
+	}
+
+	public void ShowJoyStickWeapon(final boolean visible){
+		this.runOnUiThread(new Runnable() {
+			@Override
+			public void run() {
+				if(visible){
+					joyStickWeapon.setVisibility(View.VISIBLE);
+				}else{
+					joyStickWeapon.setVisibility(View.GONE);
 				}
 			}
 

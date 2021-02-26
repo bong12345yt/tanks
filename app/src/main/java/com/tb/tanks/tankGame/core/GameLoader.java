@@ -2,6 +2,7 @@ package com.tb.tanks.tankGame.core;
 
 
 import android.graphics.Bitmap;
+import android.graphics.Point;
 import android.graphics.PointF;
 import android.graphics.Rect;
 
@@ -10,7 +11,6 @@ import com.tb.tanks.physic.RecBody2D;
 import com.tb.tanks.tankGame.core.tile.GameTile;
 import com.tb.tanks.tankGame.core.tile.TileMap;
 import com.tb.tanks.tankGame.objects.base.Creature;
-import com.tb.tanks.tankGame.util.SpriteMap;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -39,6 +39,9 @@ public class GameLoader {
 	private boolean togglePlatform_velocity=false;
 	private int backGroundImageIndex=0;
     private ArrayList<String> infoPanels;
+    private int realWidth = 0;
+    private int realHeight = 0;
+    private Point realPos = null;
     
 	public GameLoader(AndroidGame activity) {
 		this.gameActivity=activity;
@@ -50,8 +53,35 @@ public class GameLoader {
 		well_128x128 = TankResourceManager.loadImage("tiles/Well_128x128.png");
 		building_A_512x512 = TankResourceManager.loadImage("tiles/Building_A_512x512.png");
 		infoPanels =new ArrayList<String>();
-		
+		realPos = new Point();
 
+	}
+
+	public int getRealWidth() {
+		return realWidth;
+	}
+
+	public int getRealHeight() {
+		return realHeight;
+	}
+
+	public Point getRealPos() {
+		return realPos;
+	}
+
+	public ArrayList<String> loadAbout(String filename){
+		ArrayList<String> lines = new ArrayList<String>();
+		Scanner reader = null;
+		try {
+			reader = new Scanner(gameActivity.getAssets().open(filename));
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		while(reader.hasNextLine()){
+			String line = reader.nextLine();
+			lines.add(line);
+		}
+		return lines;
 	}
 
     // Use this to load the main map
@@ -93,6 +123,9 @@ public class GameLoader {
 			}
 		}
 		height = lines.size(); // number of elements in lines is the height
+
+		int countB = 0;
+		Point lastPost = new Point();
 		
 		TileMap newMap = new TileMap(width, height);
 		for (int y=0; y < height; y++) {
@@ -106,6 +139,13 @@ public class GameLoader {
 				if (ch == 'G') {
 
 				} else if (ch=='b') {
+					if(countB <= 0){
+						countB ++;
+						realPos.x = pixelX;
+						realPos.y = pixelY;
+					}
+					lastPost.x = pixelX;
+					lastPost.y = pixelY;
 					GameTile b = new GameTile(pixelX, pixelY, block_wall);
 					PointF parent = new PointF(pixelX, pixelY);
 					PointF points[] = new PointF[4];
@@ -169,6 +209,8 @@ public class GameLoader {
 				}
 			}
 		}
+		realWidth = Math.abs(lastPost.x - realPos.x);
+		realHeight = Math.abs(lastPost.y - realPos.y);
 		for (Rect r:rects){
 			newMap.addWaterZone(r);
 		}

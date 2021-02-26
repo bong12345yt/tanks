@@ -38,15 +38,37 @@ public class Server extends Thread {
                         player.setWidth(json.getInt("width"));
                         player.setHeight(json.getInt("height"));
                         player.setDegree((float) json.getDouble("degree"));
+                        player.setAngle((float) Math.toRadians(player.getDegree()));
+                        player.setDegreeWeapon((float) json.getDouble("degreeWeapon"));
+                        player.setAngleWeapon((float) Math.toRadians(player.getDegreeWeapon()));
                         player.setAdded(true);
                         break;
                     }
                     case P2PMessage.MESSAGE_PLAYER_INPUT_MOVE: {
                         PlayerInfo player = players.get(playerId);
                         if (player != null) {
-                            player.setAngle((float) json.getDouble("angle"));
                             player.setPower((float) json.getDouble("power"));
+
+                            player.setAngle((float) json.getDouble("angle"));
+
+                            player.setDegree((float) Math.toDegrees(player.getAngle() - Math.PI / 2));
+
                             //player.setNotMove(json.getBoolean("isNotMove"));
+                        }
+                        break;
+                    }
+                    case P2PMessage.MESSAGE_PLAYER_INPUT_POWER: {
+                        PlayerInfo player = players.get(playerId);
+                        if (player != null) {
+                            player.setPower((float) json.getDouble("power"));
+                        }
+                        break;
+                    }
+                    case P2PMessage.MESSAGE_TANK_PLAYER_WEAPON: {
+                        PlayerInfo player = players.get(playerId);
+                        if (player != null) {
+                            player.setAngleWeapon((float) json.getDouble("angleWeapon"));
+                            player.setDegreeWeapon((float)Math.toDegrees(player.getAngleWeapon() - Math.PI / 2));
                         }
                         break;
                     }
@@ -79,15 +101,23 @@ public class Server extends Thread {
                         }
                         break;
                     }
+                    case P2PMessage.MESSAGE_TANK_PLAYER_SCORE: {
+                        PlayerInfo player = players.get(playerId);
+                        if (player != null) {
+                            player.setScore(json.getInt("score"));
+                        }
+                        break;
+                    }
                     case P2PMessage.MESSAGE_DISCONNECT: {
                         PlayerInfo player = players.get(playerId);
                         if (player != null) {
-                            players.remove(playerId);
+                            players.clear();
                             try {
                                 for( HashMap.Entry<String, SendReceive> entry:sendReceives.entrySet()){
                                     entry.getValue().getSocket().close();
                                     entry.getValue().setSocket(null);
                                 }
+                                sendReceives.clear();
                             } catch (IOException e) {
                                 e.printStackTrace();
                             }
@@ -98,7 +128,6 @@ public class Server extends Thread {
                             } catch (IOException e) {
                                 e.printStackTrace();
                             }
-                            sendReceives.remove(playerId);
                         }
                         break;
                     }
@@ -150,7 +179,7 @@ public class Server extends Thread {
                 }
 
                 //send to client
-                if (players.size() > 0) {
+                if (players.size() > 1) {
                     Object[] playerInfos = players.values().toArray();
                     for (int i = playerInfos.length - 1; i >= 0; i--) {
                         PlayerInfo player = (PlayerInfo) playerInfos[i];
@@ -181,7 +210,7 @@ public class Server extends Thread {
         }
         JSONObject json = new JSONObject();
         try {
-            json.put("time", System.nanoTime());
+            json.put("time", System.currentTimeMillis());
             json.put("me", me.serializeForUpdate());
             json.put("others", others);
             json.put("TYPE_MESSAGE", P2PMessage.MESSAGE_GAME_UPDATE);
@@ -201,7 +230,7 @@ public class Server extends Thread {
         }
         JSONObject json = new JSONObject();
         try {
-            json.put("time", System.nanoTime());
+            json.put("time", System.currentTimeMillis());
             json.put("me", me.serializeForUpdate());
             json.put("others", others);
             json.put("TYPE_MESSAGE", P2PMessage.MESSAGE_GAME_UPDATE);
@@ -220,7 +249,7 @@ public class Server extends Thread {
     public void run() {
         try {
             if(serverSocket == null)
-               serverSocket = new ServerSocket(8888);
+               serverSocket = new ServerSocket(8988);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -238,7 +267,14 @@ public class Server extends Thread {
                 e.printStackTrace();
             }
         }
-
-
+        for( HashMap.Entry<String, SendReceive> entry:sendReceives.entrySet()){
+            try {
+                entry.getValue().getSocket().close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            entry.getValue().setSocket(null);
+        }
+        sendReceives.clear();
     }
 }

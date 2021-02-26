@@ -71,6 +71,12 @@ public abstract class Component {
 			x+=parent.x;
 			y+=parent.y;
 		}
+
+		if(parent.getParent() != null){
+			x+=parent.getParent().x;
+			y+= parent.getParent().y;
+		}
+
 		if (event.x > x && event.x < x + width - 1 && event.y > y
 				&& event.y < y + height - 1)
 			return true;
@@ -87,6 +93,14 @@ public abstract class Component {
 	}
 	public int getX() {
 		return x;
+	}
+
+	public void setX(int x) {
+		this.x = x;
+	}
+
+	public void setY(int y) {
+		this.y = y;
 	}
 
 	public int getY() {

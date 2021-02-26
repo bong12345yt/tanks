@@ -25,7 +25,7 @@ public class WifiManagerP2P implements WifiP2pManager.ActionListener, WifiP2pMan
     private WifiManager wifiManager;
     private WifiP2pManager manager;
     private WifiP2pManager.Channel channel;
-    private BroadcastReceiver receiver;
+    private BroadcastReceiver receiver = null;
     private IntentFilter intentFilter;
     private Activity mainActivity;
     private List<WifiP2pDevice> peers = new ArrayList<WifiP2pDevice>();
@@ -105,11 +105,11 @@ public class WifiManagerP2P implements WifiP2pManager.ActionListener, WifiP2pMan
         return server;
     }
 
-    public Client getHost() {
+    public Client getClient() {
         return client;
     }
 
-    public boolean isHost() {
+    public boolean isServer() {
         return isHost;
     }
 
@@ -142,6 +142,10 @@ public class WifiManagerP2P implements WifiP2pManager.ActionListener, WifiP2pMan
         }
     }
 
+    public  void setReciverP2PConnectionListener(P2PConnectionListener p2PConnectionListener){
+        ((WifiDirecBroadcastReciver)receiver).p2PConnectionListener = p2PConnectionListener;
+    }
+
     @Override
     public void onPeersAvailable(WifiP2pDeviceList wifiP2pDeviceList) {
         WifiP2pDeviceList deviceList = ((WifiDirecBroadcastReciver)receiver).getDeviceList();
@@ -172,7 +176,6 @@ public class WifiManagerP2P implements WifiP2pManager.ActionListener, WifiP2pMan
         final WifiP2pDevice device = deviceArray[i];
         WifiP2pConfig config = new WifiP2pConfig();
         config.deviceAddress = device.deviceAddress;
-
         manager.connect(channel, config, new WifiP2pManager.ActionListener() {
             @Override
             public void onSuccess() {
@@ -232,7 +235,7 @@ public class WifiManagerP2P implements WifiP2pManager.ActionListener, WifiP2pMan
                         if(isHost) {
                             Thread.sleep(1000);
                         }else{
-                            Thread.sleep(2000);
+                            Thread.sleep(1000);
                         }
                     } catch (InterruptedException e) {
                         e.printStackTrace();

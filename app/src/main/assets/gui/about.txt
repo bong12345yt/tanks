@@ -1,0 +1,31 @@
+<header>Tanks: Peer To Peer
+<header>Version 1.0.0a
+<header>T.Bog Studio
+
+<header>Product Teams:
+Nhóm 1
+<header>Developers:
+Nguyễn Chí Bồng
+Nguyễn Huy Đạt
+Lê Đức Danh
+Đặng Thị Như Huỳnh
+Trần Minh Bảo
+<header>Project Lead:
+Dương Dủ Bân
+<header>Game Designer:
+Nguyễn Chí Bồng
+<header>Producer:
+Nguyễn Huy Đạt
+<header>Studio Manager:
+Nguyễn Chí Bồng
+<header>Artists:
+Đặng Thị Như Huỳnh
+Nguyễn Chí Bồng
+<header>QA Testing:
+Lê Đức Danh
+Đặng Thị Như Huỳnh
+Trần Minh Bảo
+<header>Music Source:
+https://www.dl-sounds.com
+<header>Sound Source:
+https://www.zapsplat.com
